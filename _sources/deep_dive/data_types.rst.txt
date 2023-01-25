@@ -5,7 +5,7 @@ Data Types
 .. _`backend setting`: https://github.com/unifyai/ivy/blob/1eb841cdf595e2bb269fce084bd50fb79ce01a69/ivy/backend_handler.py#L204
 .. _`infer_dtype`: https://github.com/unifyai/ivy/blob/1eb841cdf595e2bb269fce084bd50fb79ce01a69/ivy/func_wrapper.py#L249
 .. _`import time`: https://github.com/unifyai/ivy/blob/9c2eb725387152d721040d8638c8f898541a9da4/ivy/__init__.py#L225
-.. _`ivy.Dtype`: https://github.com/unifyai/ivy/blob/8482eb3fcadd0721f339a1a55c3f3b9f5c86d8ba/ivy/functional/ivy/data_type.py#L1096
+.. _`ivy.Dtype`: https://github.com/unifyai/ivy/blob/48c70bce7ff703d817e130a17f63f02209be08ec/ivy/__init__.py#L65
 .. _`empty class`: https://github.com/unifyai/ivy/blob/9c2eb725387152d721040d8638c8f898541a9da4/ivy/__init__.py#L38
 .. _`also specified`: https://github.com/unifyai/ivy/blob/9c2eb725387152d721040d8638c8f898541a9da4/ivy/__init__.py#L241
 .. _`tuples`: https://github.com/unifyai/ivy/blob/9c2eb725387152d721040d8638c8f898541a9da4/ivy/__init__.py#L256
@@ -44,7 +44,9 @@ The data types supported by Ivy are as follows:
 * float64
 * bool
 
-These are all defined at `import time`_, with each of these set as an `ivy.Dtype`_ instance.
+Note that Ivy does not currently support complex data types, these will hopefully be added in a future implementation.
+
+The supported data types are all defined at `import time`_, with each of these set as an `ivy.Dtype`_ instance.
 The :class:`ivy.Dtype` class derives from :class:`str`, and has simple logic in the constructor to verify that the string formatting is correct.
 All data types can be queried as attributes of the :mod:`ivy` namespace, such as ``ivy.float32`` etc.
 
@@ -82,7 +84,7 @@ A few examples include :func:`ivy.astype` which copies an array to a specified d
 Many functions in the :mod:`data_type.py` module are *convenience* functions, which means that they do not directly modify arrays, as explained in the :ref:`Function Types` section.
 
 For example, the following are all convenience functions:
-`ivy.can_cast`_, which determines if one data type can be cast to another data type according to type-promotion rules, `ivy.dtype`_, which gets the data type for the input array, `ivy.set_default_dtype`_, which sets the global default data dtype, and `ivy.default_dtype`_, which returns the correct data type to use.
+`ivy.can_cast`_, which determines if one data type can be cast to another data type according to type-promotion rules, `ivy.dtype <https://github.com/unifyai/ivy/blob/8482eb3fcadd0721f339a1a55c3f3b9f5c86d8ba/ivy/functional/ivy/data_type.py#L1096>`__, which gets the data type for the input array, `ivy.set_default_dtype`_, which sets the global default data dtype, and `ivy.default_dtype`_, which returns the correct data type to use.
 
 `ivy.default_dtype`_ is arguably the most important function.
 Any function in the functional API that receives a ``dtype`` argument will make use of this function, as explained below.
@@ -338,6 +340,16 @@ For Frontend Functions:
 
 For compositional functions, the supported and unsupported data types can then be inferred automatically using the helper functions `function_supported_dtypes <https://github.com/unifyai/ivy/blob/9e71fc2b589bf8f6b7a0762602723ac084bb5d9e/ivy/functional/ivy/data_type.py#L1370>`_ and `function_unsupported_dtypes <https://github.com/unifyai/ivy/blob/9e71fc2b589bf8f6b7a0762602723ac084bb5d9e/ivy/functional/ivy/data_type.py#L1407>`_ respectively, which traverse the abstract syntax tree of the compositional function and evaluate the relevant attributes for each primary function in the composition.
 The same approach applies for most stateful methods, which are themselves compositional.
+
+It is also possible to add supported and unsupported dtypes as a combination of both class and individual dtypes. The allowed dtype classes are: ``valid``, ``numeric``, ``float``, ``integer``, and ``unsigned``.
+
+For example, using the decorator:
+
+.. code-block:: python
+
+    @with_unsupported_dtypes{{"1.11.0 and below": ("unsigned", "bfloat16", "float16")}, backend_version)
+
+would consider all the unsigned integer dtypes (``uint8``, ``uint16``, ``uint32``, ``uint64``), ``bfloat16`` and ``float16`` as unsupported for the function.
 
 In order to get the supported and unsupported devices and dtypes for a function, the corresponding documentation of that function for that specific framework can be referred.
 However, sometimes new unsupported dtypes are discovered while testing too.
